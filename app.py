@@ -13,7 +13,7 @@ oso = Oso(
     api_key=os.environ["OSO_AUTH"],
     data_bindings="oso_local.yaml",
 )
-engine = create_engine("postgresql://localhost", echo=True)
+engine = create_engine("postgresql://oso:password@localhost:5433", echo=True)
 
 
 @app.route("/api/users/<user_id>/cards")
@@ -30,7 +30,10 @@ def user_cards(user_id):
 
     with Session(engine) as session:
         cards = session.execute(query).mappings().all()
-    return [dict(card) for card in cards]
+
+    return {
+        "cards": [dict(card) for card in cards],
+    }
 
 
 @app.route("/api/users")

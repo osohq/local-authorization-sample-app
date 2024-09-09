@@ -21,7 +21,7 @@ def create_company(conn):
 
 
 def seed_data():
-    engine = create_engine("postgresql://localhost", echo=True)
+    engine = create_engine("postgresql://oso:password@localhost:5433", echo=True)
 
     with engine.connect() as conn:
         # initialize schema

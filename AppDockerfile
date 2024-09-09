@@ -1,0 +1,13 @@
+FROM python:3.12-bookworm
+
+# install Oso CLI
+RUN curl -L https://cloud.osohq.com/install.sh | bash
+
+COPY . /app
+WORKDIR /app
+
+# seed data / policy
+RUN pip install -r requirements.txt
+RUN bin/quickstart.sh
+
+CMD ["flask", "--app", "app", "run"]

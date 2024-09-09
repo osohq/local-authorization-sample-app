@@ -1,0 +1,37 @@
+services:
+  oso:
+    build:
+      dockerfile: Dockerfile
+    volumes:
+      - ./oso/data:/data
+    environment:
+      - OSO_AUTH=e_0123456789_12345_osotesttoken01xiIn
+      - OSO_URL=http://localhost:8080
+    ports:
+      - 8080:8080
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - 5433:5432
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=oso
+      - POSTGRES_DB=app_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oso -d app_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+  app:
+    build:
+      dockerfile: AppDockerfile
+    environment:
+      - OSO_AUTH=e_0123456789_12345_osotesttoken01xiIn
+      - OSO_URL=http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
