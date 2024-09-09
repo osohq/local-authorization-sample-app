@@ -2,9 +2,10 @@ import os
 
 from flask import Flask, request
 from oso_cloud import Oso, Value
-import sqlalchemy
 from sqlalchemy import create_engine, select, text
-from sqlalchemy.orm import Mapped, mapped_column, Session
+from sqlalchemy.orm import Session
+
+from model import Card, User
 
 app = Flask(__name__)
 oso = Oso(
@@ -13,23 +14,6 @@ oso = Oso(
     data_bindings="oso_local.yaml",
 )
 engine = create_engine("postgresql://localhost", echo=True)
-
-class Base(sqlalchemy.orm.DeclarativeBase): ...
-
-class User(Base):
-    __tablename__ = "users"
-    __table_args__ = {"schema": "demo_app"}
-
-    user_id: Mapped[str] = mapped_column(primary_key=True)
-    manager_id: Mapped[str]
-
-
-class Card(Base):
-    __tablename__ = "cards"
-    __table_args__ = {"schema": "demo_app"}
-
-    card_id: Mapped[str] = mapped_column(primary_key=True)
-    manager_id: Mapped[str]
 
 
 @app.route("/api/users/<user_id>/cards")
