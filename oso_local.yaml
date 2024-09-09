@@ -1,0 +1,4 @@
+facts:
+  has_relation(User:_, "card.read", Card:_):
+    query: |-
+      SELECT manager_id, card_id FROM demo_app.cards

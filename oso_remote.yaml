@@ -1,0 +1,11 @@
+facts:
+  has_relation(User:_, "manager", User:_):
+    db: app-db
+    query: |-
+      SELECT user_id, manager_id
+      FROM demo_app.users
+      WHERE manager_id IS NOT NULL
+
+dbs:
+  app-db:
+    connection_string: postgresql://localhost
