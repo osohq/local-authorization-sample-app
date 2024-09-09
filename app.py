@@ -39,7 +39,7 @@ def users():
 
     query = select(User.user_id, User.manager_id)
     if past is not None:
-        query.filter(User.user_id > past)
+        query = query.filter(User.user_id > past)
     query = query.order_by(User.user_id)
     query = query.limit(30)
 
