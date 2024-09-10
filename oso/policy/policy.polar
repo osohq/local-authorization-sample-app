@@ -5,6 +5,11 @@ actor User {
 resource Card {
   permissions = ["card.read"];
 
-  relations = { manager: User };
-  "card.read" if "manager";
+  relations = { owner: User };
+  "card.read" if "owner";
 }
+
+has_permission(manager:User, permission:String, card:Card) if
+  user matches User and
+  has_relation(user, "manager", manager) and
+  has_permission(user, permission, card);

@@ -1,4 +1,8 @@
 facts:
-  has_relation(User:_, "card.read", Card:_):
+  has_relation(Card:_, owner, User:_):
     query: |-
       SELECT manager_id, card_id FROM demo_app.cards
+
+sql_types:
+  Card: UUID
+  User: UUID
