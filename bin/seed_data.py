@@ -22,7 +22,8 @@ def create_company(conn):
     ceo_name = f"{random.choice(first_names)} Boss"
     [ceo_id] = conn.execute(text(f"INSERT INTO users(manager_id, name) VALUES (null, '{ceo_name}') RETURNING user_id")).scalars()
 
-    cards_query = text("INSERT INTO cards(manager_id) VALUES {}".format(', '.join([f"('{ceo_id}')"] * CARDS_PER)))
+    values = ', '.join([f"('{ceo_id}')"] * CARDS_PER)
+    cards_query = text(f"INSERT INTO cards(manager_id) VALUES {values}")
     conn.execute(cards_query)
 
     frontier = deque([ceo_id])
@@ -30,8 +31,11 @@ def create_company(conn):
         manager = frontier.popleft()
         values = ', '.join(f"('{manager}', '{random_name()}')" for _ in range(DIRECT_REPORTS))
         user_query = text(f"INSERT INTO users(manager_id, name) VALUES {values} RETURNING user_id")
-        new_user_ids = conn.execute(user_query).scalars()
+        new_user_ids = list(conn.execute(user_query).scalars())
         frontier.extend(new_user_ids)
+        values = ', '.join(f"('{user_id}')" for user_id in new_user_ids)
+        cards_query = text(f"INSERT INTO cards(manager_id) VALUES {values}")
+        conn.execute(cards_query)
 
 
 def seed_data():
