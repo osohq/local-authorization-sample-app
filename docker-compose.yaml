@@ -29,7 +29,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://oso:password@postgres:5432/app_db
       - OSO_AUTH=e_0123456789_12345_osotesttoken01xiIn
-      - OSO_URL=http://localhost:8081
+      - OSO_URL=http://oso:8081
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_APP=app.py
     ports:
