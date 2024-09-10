@@ -1,13 +1,25 @@
 FROM python:3.12-bookworm
 
+# get base dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# create the runtime environment for the app
+RUN useradd -ms /bin/bash app
+RUN mkdir -p /app && chown app:app /app
+
+USER app
+WORKDIR /app
+
 # install Oso CLI
 RUN curl -L https://cloud.osohq.com/install.sh | bash
 
-COPY . /app
-WORKDIR /app
-
-# seed data / policy
+# Install requirements
+COPY requirements.txt /app
 RUN pip install -r requirements.txt
-RUN bin/quickstart.sh
 
-CMD ["flask", "--app", "app", "run"]
+COPY . /app
+
+ENTRYPOINT ["python3", "-m", "flask", "run", "-p", "5050"]
