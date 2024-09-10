@@ -29,6 +29,7 @@ services:
     build:
       dockerfile: AppDockerfile
     environment:
+      - DATABASE_URL=postgresql://oso:password@localhost:5433
       - OSO_AUTH=e_0123456789_12345_osotesttoken01xiIn
       - OSO_URL=http://localhost:8080
     depends_on:

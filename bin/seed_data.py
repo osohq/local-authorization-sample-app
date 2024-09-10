@@ -1,5 +1,7 @@
-from sqlalchemy import create_engine, text
+import os
 from collections import deque
+
+from sqlalchemy import create_engine, text
 
 COMPANIES = 10
 CEO_REPORTS_TOTAL = 1000
@@ -21,7 +23,8 @@ def create_company(conn):
 
 
 def seed_data():
-    engine = create_engine("postgresql://oso:password@localhost:5433", echo=True)
+    uri = os.environ["DATABASE_URL"]
+    engine = create_engine(uri, echo=True)
 
     with engine.connect() as conn:
         # initialize schema

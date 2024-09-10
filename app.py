@@ -13,7 +13,8 @@ oso = Oso(
     api_key=os.environ["OSO_AUTH"],
     data_bindings="oso_local.yaml",
 )
-engine = create_engine("postgresql://oso:password@localhost:5433", echo=True)
+uri = os.environ["DATABASE_URL"]
+engine = create_engine(uri, echo=True)
 
 
 @app.route("/api/users/<user_id>/cards")
