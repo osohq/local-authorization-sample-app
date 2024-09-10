@@ -1,4 +1,5 @@
 import os
+import random
 from collections import deque
 
 from sqlalchemy import create_engine, text
@@ -8,8 +9,18 @@ CEO_REPORTS_TOTAL = 1000
 DIRECT_REPORTS = 3
 CARDS_PER = 6
 
+with open("words.txt", "r") as f:
+    last_names = f.read().splitlines()
+
+first_names = ["Alice", "Bob", "Chris", "Drew", "Eve"]
+
+def random_name():
+    return f"{random.choice(first_names)} {random.choice(last_names)}"
+
+
 def create_company(conn):
-    [ceo_id] = conn.execute(text("INSERT INTO users(manager_id) VALUES (null) RETURNING user_id")).scalars()
+    ceo_name = f"{random.choice(first_names)} Boss"
+    [ceo_id] = conn.execute(text(f"INSERT INTO users(manager_id, name) VALUES (null, '{ceo_name}') RETURNING user_id")).scalars()
 
     cards_query = text("INSERT INTO cards(manager_id) VALUES {}".format(', '.join([f"('{ceo_id}')"] * CARDS_PER)))
     conn.execute(cards_query)
@@ -17,7 +28,8 @@ def create_company(conn):
     frontier = deque([ceo_id])
     for _ in range(CEO_REPORTS_TOTAL // DIRECT_REPORTS):
         manager = frontier.popleft()
-        user_query = text("INSERT INTO users(manager_id) VALUES {} RETURNING user_id".format(', '.join([f"('{manager}')"] * DIRECT_REPORTS)))
+        values = ', '.join(f"('{manager}', '{random_name()}')" for _ in range(DIRECT_REPORTS))
+        user_query = text(f"INSERT INTO users(manager_id, name) VALUES {values} RETURNING user_id")
         new_user_ids = conn.execute(user_query).scalars()
         frontier.extend(new_user_ids)
 
