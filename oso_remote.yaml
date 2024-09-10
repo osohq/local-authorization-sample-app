@@ -8,4 +8,4 @@ facts:
 
 dbs:
   app-db:
-    connection_string: postgresql://localhost
+    connection_string: $DATABASE_URL
