@@ -5,7 +5,7 @@ from collections import deque
 from sqlalchemy import create_engine, text
 
 COMPANIES = 10
-CEO_REPORTS_TOTAL = 1000
+CEO_REPORTS_TOTAL = 6000
 DIRECT_REPORTS = 3
 CARDS_PER = 6
 

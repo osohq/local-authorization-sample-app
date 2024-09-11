@@ -1,20 +1,28 @@
 actor User {
   relations = { direct_manager: User };
-  roles = ["manager"];
-
-  "manager" if "direct_manager";
-  "manager" if "manager" on "direct_manager";
 }
 
+managed_by(employee: User, manager: User) if
+  has_relation(employee, "direct_manager", manager);
+
+managed_by(employee: User, manager: User) if
+  middle_manager matches User and
+  has_relation(employee, "direct_manager", middle_manager) and
+  managed_by(middle_manager, manager);
+
+has_role(user: User, "viewer", card: Card) if
+    card_owner matches User and
+    has_relation(card, "owner", card_owner) and
+    managed_by(card_owner, user);
+
 resource Card {
-    permissions = ["card.read"];
+    permissions = ["view"];
     relations = { owner: User };
-    roles = ["reader"];
+    roles = ["viewer"];
 
-    "reader" if "owner";
-    "reader" if "manager" on "owner";
+    "viewer" if "owner";
 
-    "card.read" if "reader";
+    "view" if "viewer";
 }
 
 test "hierarchy" {
@@ -26,9 +34,9 @@ test "hierarchy" {
         has_relation(User{"crystal"}, "direct_manager", User{"dorian"});
     }
 
-    assert allow(User{"alice"}, "card.read", Card{"1"});
-    assert allow(User{"bhav"}, "card.read", Card{"1"});
-    assert allow(User{"crystal"}, "card.read", Card{"1"});
-    assert allow(User{"dorian"}, "card.read", Card{"1"});
-    assert_not allow(User{"fergie"}, "card.read", Card{"1"});
+    assert allow(User{"alice"}, "view", Card{"1"});
+    assert allow(User{"bhav"}, "view", Card{"1"});
+    assert allow(User{"crystal"}, "view", Card{"1"});
+    assert allow(User{"dorian"}, "view", Card{"1"});
+    assert_not allow(User{"fergie"}, "view", Card{"1"});
 }
