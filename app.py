@@ -24,21 +24,22 @@ def api_user_cards(user_id):
 
 
 def get_user_cards(user_id, past):
-    sql_fragment = oso.list_local(Value("User", user_id), "card.read", "Card", "cards.manager_id")
+    LIMIT = 30
+    sql_fragment = oso.list_local(Value("User", user_id), "card.read", "Card", "cards.card_id")
 
     query = select(Card.card_id, Card.manager_id)
     if past is not None:
-        query.filter(Card.card_id > past)
+        query = query.filter(Card.card_id > past)
     query = query.filter(text(sql_fragment))
     query = query.order_by(Card.card_id)
-    query = query.limit(30)
+    query = query.limit(LIMIT)
 
     with Session(engine) as session:
         cards = session.execute(query).mappings().all()
 
     return {
         "cards": [dict(card) for card in cards],
-        "past": cards[-1].card_id if cards else None,
+        "past": cards[-1].card_id if cards and len(cards) == LIMIT else None,
     }
 
 
@@ -121,7 +122,7 @@ def html_user_cards(user_id):
 
     cards_data = get_user_cards(user_id, past)
     cards_list = ''.join(f"<li>{user['card_id']}</li>" for user in cards_data['cards']) or "No results"
-    next_page_button = f"""<a href="/users?past={cards_data['past']}">Next Page</a>""" if cards_data['past'] else ""
+    next_page_button = f"""<a href="/users/{user_id}/cards?past={cards_data['past']}">Next Page</a>""" if cards_data['past'] else ""
     manager_line = f"""Manager: <a href="/users/{user['manager_id']}/cards">{user['manager_name']}</a>""" if user['manager_id'] else ""
     return page(f"""
     <a href="/users">&lt; Users</a>

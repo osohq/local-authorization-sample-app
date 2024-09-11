@@ -2,6 +2,7 @@
 
 - `docker compose up -d`
 - `python3 -m venv venv`
+- `. venv/bin/activate`
 - `pip install -r requirements.txt`
 - `export DATABASE_URL=postgresql://oso:password@localhost:5432/app_db`
 - `python3 bin/seed_data.py`

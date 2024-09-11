@@ -1,5 +1,5 @@
 facts:
-  has_relation(User:_, "manager", User:_):
+  has_relation(User:_, direct_manager, User:_):
     db: app-db
     query: |-
       SELECT user_id, manager_id

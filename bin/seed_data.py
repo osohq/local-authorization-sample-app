@@ -33,7 +33,11 @@ def create_company(conn):
         user_query = text(f"INSERT INTO users(manager_id, name) VALUES {values} RETURNING user_id")
         new_user_ids = list(conn.execute(user_query).scalars())
         frontier.extend(new_user_ids)
-        values = ', '.join(f"('{user_id}')" for user_id in new_user_ids)
+        values = ', '.join(
+            f"('{user_id}')"
+            for user_id in new_user_ids
+            for _ in range(CARDS_PER)
+        )
         cards_query = text(f"INSERT INTO cards(manager_id) VALUES {values}")
         conn.execute(cards_query)
 
