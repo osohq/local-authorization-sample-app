@@ -44,7 +44,7 @@ def create_company(conn):
 
 def seed_data():
     uri = os.environ["DATABASE_URL"]
-    engine = create_engine(uri, echo=True)
+    engine = create_engine(uri)
 
     with engine.connect() as conn:
         # initialize schema

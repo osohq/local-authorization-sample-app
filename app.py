@@ -1,13 +1,5 @@
-import os
-import time
-
 from flask import Flask, request
-from oso_cloud import Oso, typed_var, Value
-from sqlalchemy import create_engine, func, select, text
-from sqlalchemy.orm import Session
-from sqlalchemy.dialects import postgresql
 
-from model import Card, User
 from data import get_user_cards, get_users, get_user, get_transitive_reports, get_direct_reports
 
 app = Flask(__name__)

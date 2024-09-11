@@ -1,11 +1,9 @@
 import os
 import time
 
-from flask import Flask, request
 from oso_cloud import Oso, typed_var, Value
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session
-from sqlalchemy.dialects import postgresql
 
 from model import Card, User
 
