@@ -18,4 +18,4 @@ class Card(Base):
     __table_args__ = {"schema": "demo_app"}
 
     card_id: Mapped[str] = mapped_column(primary_key=True)
-    manager_id: Mapped[str]
+    owner_id: Mapped[str]

@@ -20,9 +20,9 @@ def get_user_cards(user_id, past):
     LIMIT = 30
     sql_fragment = oso.list_local(Value("User", user_id), "view", "Card", "cards.card_id")
 
-    query = select(Card.card_id, Card.manager_id, User.name.label("owner"))
+    query = select(Card.card_id, Card.owner_id, User.name.label("owner"))
     query = query.filter(text(sql_fragment))
-    query = query.join(User, User.user_id == Card.manager_id)
+    query = query.join(User, User.user_id == Card.owner_id)
 
     with Session(engine) as session:
         count = session.execute(select(func.count()).select_from(query)).scalar()

@@ -65,7 +65,7 @@ def html_user_cards(user_id):
     direct_reports = get_direct_reports(user_id)
     cards_data = get_user_cards(user_id, past)
 
-    cards_list = ''.join(f"<li>{card['card_id']} (owner: <a href='/users/{card['manager_id']}/cards'>{card['owner']}</a>)</li>" for card in cards_data['cards']) or "No results"
+    cards_list = ''.join(f"<li>{card['card_id']} (owner: <a href='/users/{card['owner_id']}/cards'>{card['owner']}</a>)</li>" for card in cards_data['cards']) or "No results"
     next_page_button = f"""<a href="/users/{user_id}/cards?past={cards_data['past']}">Next Page</a>""" if cards_data['past'] else ""
     manager_line = f"""<li>Manager: <a href="/users/{user['manager_id']}/cards">{user['manager_name']}</a></li>""" if user['manager_id'] else ""
 

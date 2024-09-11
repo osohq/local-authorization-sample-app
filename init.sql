@@ -11,7 +11,7 @@ CREATE TABLE demo_app.users (
 
 CREATE TABLE demo_app.cards (
   card_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  manager_id UUID NOT NULL REFERENCES demo_app.users
+  owner_id UUID NOT NULL REFERENCES demo_app.users
 );
 
-CREATE INDEX card_manager ON demo_app.cards (manager_id);
+CREATE INDEX card_manager ON demo_app.cards (owner_id);
