@@ -1,7 +1,7 @@
 facts:
   has_relation(Card:_, owner, User:_):
     query: |-
-      SELECT card_id, manager_id FROM demo_app.cards
+      SELECT card_id, owner_id FROM demo_app.cards
 
 sql_types:
   Card: UUID
