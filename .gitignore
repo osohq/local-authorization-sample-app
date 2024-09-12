@@ -1,7 +1,6 @@
 venv/
 __pycache__/
-postgres-data/*
-!postgres-data/postgresql.conf
+postgres-data/
 .env
 .venv/
 oso/data
