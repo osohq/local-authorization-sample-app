@@ -18,7 +18,7 @@ USER app
 WORKDIR /app
 
 # fetch the pinned local development binary
-RUN curl https://oso-local-development-binary.s3.amazonaws.com/1.8.4/oso-local-development-binary-linux-x86_64.tar.gz --output local.tar.gz \
+RUN curl https://oso-local-development-binary.s3.amazonaws.com/1.8.5/oso-local-development-binary-linux-x86_64.tar.gz --output local.tar.gz \
   && tar -xzf local.tar.gz \
   && rm local.tar.gz
 

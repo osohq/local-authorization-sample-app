@@ -8,7 +8,7 @@ from itertools import islice
 from sqlalchemy import create_engine, text
 
 # data constants: modify to change the amt of data generated
-COMPANIES = 1000
+COMPANIES = 100
 CEO_REPORTS_TOTAL = 6000
 DIRECT_REPORTS = 3
 CARDS_PER = 6
