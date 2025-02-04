@@ -1,5 +1,6 @@
 # Instructions
 
+- ensure you're using Python 3.13.1 or higher.
 - `docker compose up -d`
 - `python3 -m venv venv`
 - `. venv/bin/activate`
