@@ -1,5 +1,6 @@
 # Instructions
 
+- Recommend using Python 3.12.6.
 - `docker compose up -d`
 - `python3 -m venv venv`
 - `. venv/bin/activate`
@@ -10,4 +11,4 @@
 - `export OSO_URL=http://localhost:8081`
 - (if you need to install the `oso-cloud` CLI:) `curl -L https://cloud.osohq.com/install.sh | bash`
 - `oso-cloud experimental reconcile oso_remote.yaml --perform-updates`
-- open `http://localhost:5050` in your browser
+- open `http://localhost:5050/users` in your browser
