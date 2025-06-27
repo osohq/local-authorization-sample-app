@@ -48,6 +48,23 @@ def get_user_cards(user_id, past):
         "query_time": query_time,
     }
 
+def get_card(user_id, card_id):
+    allow_query = oso.authorize_local(Value("User", user_id), "view", Value("Card", card_id))
+    
+    with Session(engine) as session:
+        authorized = session.execute(text(allow_query)).scalar()
+        if not authorized:
+            raise ValueError(f"User {user_id} is not authorized to view card {card_id}")
+
+    query = select(Card.card_id, Card.owner_id)
+    query = query.filter(Card.card_id == card_id)
+
+    with Session(engine) as session:
+        card = session.execute(query).mappings().one_or_none()
+        if card is None:
+            raise ValueError(f"Card {card_id} not found")
+        return dict(card)
+
 
 def get_users(past):
     query = select(User.user_id, User.manager_id, User.name)

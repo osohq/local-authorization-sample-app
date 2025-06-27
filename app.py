@@ -1,6 +1,6 @@
 from flask import Flask, request
 
-from data import get_user_cards, get_users, get_user, get_transitive_reports, get_direct_reports
+from data import get_user_cards, get_card, get_users, get_user, get_transitive_reports, get_direct_reports
 
 app = Flask(__name__)
 
@@ -48,6 +48,13 @@ def html_users():
     <a href="/users?past={users_data['past']}">Next Page</a>
     """)
 
+@app.route("/users/<user_id>/cards/<card_id>")
+def html_card(user_id, card_id):
+    card = get_card(user_id, card_id)
+    return page(f"""
+    <a href="/users/{user_id}/cards">&lt; Cards</a>
+    <h1>{card['card_id']}</h1>
+    """)
 
 @app.route("/users/<user_id>/cards")
 def html_user_cards(user_id):
@@ -66,8 +73,7 @@ def html_user_cards(user_id):
     cards_data = get_user_cards(user_id, past)
 
     cards_list = ''.join(
-        f"<li>{card['card_id']} (owner: <a href='/users/{card['owner_id']}/cards'>{card['owner']}</a>)</li>"
-        if 'owner' in card else f"<li>{card['card_id']}</li>"
+        f"<li><a href='/users/{user_id}/cards/{card['card_id']}'>{card['card_id']}</a></li>"
         for card in cards_data['cards']
     ) or "No results"
     next_page_button = f"""<a href="/users/{user_id}/cards?past={cards_data['past']}">Next Page</a>""" if cards_data['past'] else ""
