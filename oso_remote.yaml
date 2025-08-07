@@ -5,12 +5,20 @@ facts:
       SELECT team_id, parent_team_id
       FROM demo_app.teams
       WHERE parent_team_id IS NOT NULL
-  has_relation(Team:_, managed_by, User:_):
+  has_role(User:_, Manager, Team:_):
     db: app-db
     query: |-
-      SELECT team_id, managed_by
-      FROM demo_app.teams
-      WHERE managed_by IS NOT NULL
+      SELECT user_id, team_id
+      FROM demo_app.users
+      WHERE is_team_manager = TRUE
+  has_role(User:_, Admin, Company:_):
+    db: app-db
+    query: |-
+      SELECT user_id, company_id FROM demo_app.users WHERE is_company_admin = TRUE
+  has_role(User:_, Head, Department:_):
+    db: app-db
+    query: |-
+      SELECT user_id, department_id FROM demo_app.users WHERE is_department_head = TRUE
 
 dbs:
   app-db:

@@ -6,7 +6,6 @@ SELECT pg_catalog.set_config('search_path', 'demo_app', false);
 -- Companies table
 CREATE TABLE demo_app.companies (
   company_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  admin_id UUID NOT NULL,
   name TEXT NOT NULL
 );
 
@@ -14,17 +13,14 @@ CREATE TABLE demo_app.companies (
 CREATE TABLE demo_app.departments (
   department_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE,
-  head_of_department_id UUID
+  company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE
 );
 
 -- Teams table
 CREATE TABLE demo_app.teams (
   team_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  department_id UUID NOT NULL REFERENCES demo_app.departments(department_id) ON DELETE CASCADE,
   parent_team_id UUID REFERENCES demo_app.teams(team_id) ON DELETE SET NULL,
-  managed_by UUID,
   company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE
 );
 
@@ -33,35 +29,23 @@ CREATE TABLE demo_app.users (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   team_id UUID REFERENCES demo_app.teams(team_id) ON DELETE SET NULL,
-  company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE
+  department_id UUID REFERENCES demo_app.departments(department_id) ON DELETE SET NULL,
+  company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE,
+  is_company_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  is_department_head BOOLEAN NOT NULL DEFAULT FALSE,
+  is_team_manager BOOLEAN NOT NULL DEFAULT FALSE
 );
-
--- Now that all tables exist, add the circular foreign-key constraints
-ALTER TABLE demo_app.companies
-  ADD CONSTRAINT fk_companies_admin
-  FOREIGN KEY (admin_id) REFERENCES demo_app.users(user_id) ON DELETE CASCADE;
-
-ALTER TABLE demo_app.departments
-  ADD CONSTRAINT fk_departments_head
-  FOREIGN KEY (head_of_department_id) REFERENCES demo_app.users(user_id) ON DELETE SET NULL;
-
-ALTER TABLE demo_app.teams
-  ADD CONSTRAINT fk_teams_managed_by
-  FOREIGN KEY (managed_by) REFERENCES demo_app.users(user_id) ON DELETE SET NULL;
 
 CREATE TABLE demo_app.cards (
   card_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID NOT NULL REFERENCES demo_app.users
 );
 
+-- Updated indexes after schema refactor
 CREATE INDEX idx_departments_company_id ON demo_app.departments(company_id);
-
-CREATE INDEX idx_teams_department_id ON demo_app.teams(department_id);
 CREATE INDEX idx_teams_parent_team_id ON demo_app.teams(parent_team_id);
-CREATE INDEX idx_teams_managed_by ON demo_app.teams(managed_by);
 CREATE INDEX idx_teams_company_id ON demo_app.teams(company_id);
-
 CREATE INDEX idx_users_team_id ON demo_app.users(team_id);
+CREATE INDEX idx_users_department_id ON demo_app.users(department_id);
 CREATE INDEX idx_users_company_id ON demo_app.users(company_id);
-
 CREATE INDEX idx_cards_owner_id ON demo_app.cards(owner_id);

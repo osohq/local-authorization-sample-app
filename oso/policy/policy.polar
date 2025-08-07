@@ -19,9 +19,8 @@ resource Department {
 
 resource Team {
   roles = ["Manager"];
-  relations = { parent_team: Team, managed_by: User, department: Department };
+  relations = { parent_team: Team, department: Department };
 
-  "Manager" if "managed_by";
   "Manager" if "Manager" on "parent_team";
   "Manager" if "Head" on "department";
 }

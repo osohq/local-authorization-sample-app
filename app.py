@@ -72,6 +72,8 @@ def html_user_cards(user_id):
     ) or "No results"
     next_page_button = f"""<a href="/users/{user_id}/cards?past={cards_data['past']}">Next Page</a>""" if cards_data['past'] else ""
     manager_line = f"""<li>Manager: <a href="/users/{user['manager_id']}/cards">{user['manager_name']}</a></li>""" if user['manager_id'] else ""
+    department_head_line = f"""<li>Department Head: <a href="/users/{user['department_head_id']}/cards">{user['department_head_name']}</a></li>""" if user['department_head_id'] else ""
+    company_admin_line = f"""<li>Company Admin: <a href="/users/{user['company_admin_id']}/cards">{user['company_admin_name']}</a></li>""" if user['company_admin_id'] else ""
 
     sql_html = (
         cards_data['sql']
@@ -88,6 +90,8 @@ def html_user_cards(user_id):
         <li>{len(reports)} transitive reports</li>
         <li>{len(direct_reports)} direct reports</li>
         {manager_line}
+        {department_head_line}
+        {company_admin_line}
     </ul>
     <div>
         <h3>Cards ({cards_data['total_cards']} total)</h3>

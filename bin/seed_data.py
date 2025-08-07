@@ -40,101 +40,114 @@ def chunks(it, size):
 
 def create_companies(conn):
     """
-    Seed the database with companies, departments, teams, and users that fit
-    the schema defined in `init.sql` and the constants declared at the top of
-    this file.
+    Populate demo_app tables according to the updated schema in init.sql.
 
-    The function performs the following for each company:
-      1. Create an *admin* user (referenced by the company as `admin_id`).
-      2. Create `DEPARTMENTS_PER_COMPANY` departments, each with its own *head* user.
-      3. For every department, create `TEAMS_PER_DEPARTMENT` top-level teams and
-         recursively add sub-teams up to `MAX_SUBTEAM_DEPTH` levels deep, with
-         `TEAMS_PER_TEAM` children per team.
-      4. For every team, create `USERS_PER_TEAM` users (one of whom is the
-         manager, referenced by the team as `managed_by`).
+    Tables & relevant columns now look like:
+      companies(company_id, name)
+      departments(department_id, name, company_id)
+      teams(team_id, name, parent_team_id, company_id)
+      users(user_id, name, team_id, department_id, company_id,
+            is_company_admin, is_department_head, is_team_manager)
+
+    Strategy per company:
+      • create an admin user (is_company_admin=True)
+      • create N departments each with a head user (is_department_head=True)
+      • for every department create top-level teams and recursive sub-teams.
+        Each team gets USERS_PER_TEAM users; one marked is_team_manager=True.
     """
     import uuid
 
-    # ------------------------------------------------------------------ helpers
-    def _q(val):
-        """Quote a value for interpolation into an SQL string."""
-        if val is None:
-            return "null"
-        return f"'{str(val).replace("'", "''")}'"
-
-    def _bulk_insert(table: str, columns: list[str], rows: list[tuple], *, chunk_size: int = USER_CHUNKS):
-        """Fast (and very simple) bulk INSERT for demo data."""
+    # -------------------------------- internal helpers
+    def _bulk_insert(table: str, cols: list[str], rows: list[tuple]):
         if not rows:
             return
-        cols_sql = ", ".join(columns)
-        for chunk in chunks(rows, chunk_size):
-            values_sql = ", ".join(
-                "(" + ", ".join(_q(v) for v in row) + ")" for row in chunk
+        cols_sql = ", ".join(cols)
+        # simple paramless value interpolation since this is demo data only
+        values_chunks = chunks(rows, USER_CHUNKS)
+        for chunk in values_chunks:
+            value_sql = ", ".join(
+                "(" + ", ".join("null" if v is None else f"'{str(v).replace("'", "''")}'" for v in r) + ")"  # noqa: E501
+                for r in chunk
             )
-            conn.execute(text(f"INSERT INTO {table} ({cols_sql}) VALUES {values_sql}"))
+            conn.execute(text(f"INSERT INTO {table} ({cols_sql}) VALUES {value_sql}"))
 
-    def _create_team_hierarchy(company_id, department_id, parent_team_id, depth, team_rows, user_rows):
-        """Recursively create a team (and its sub-teams) plus users."""
+    def _create_team_hierarchy(company_id: str, department_id: str, parent_team_id: str | None, depth: int, team_rows: list, user_rows: list):
+        """Recursive team/user creation."""
         team_id = uuid.uuid4()
-        manager_id = uuid.uuid4()
         team_name = f"Team {team_id.hex[:8]}"
+        # store team row (no department FK any more)
+        team_rows.append((team_id, team_name, parent_team_id, company_id))
 
-        # Team row
-        team_rows.append((team_id, team_name, department_id, parent_team_id, manager_id, company_id))
+        # manager user
+        manager_id = uuid.uuid4()
+        user_rows.append((
+            manager_id,
+            random_name(),
+            team_id,
+            department_id,
+            company_id,
+            False,  # is_company_admin
+            False,  # is_department_head
+            True    # is_team_manager
+        ))
 
-        # Manager user
-        user_rows.append((manager_id, random_name(), team_id, company_id))
-
-        # Additional users for the team
+        # other users
         for _ in range(USERS_PER_TEAM - 1):
-            user_id = uuid.uuid4()
-            user_rows.append((user_id, random_name(), team_id, company_id))
+            uid = uuid.uuid4()
+            user_rows.append((uid, random_name(), team_id, department_id, company_id, False, False, False))
 
-        # Recurse into sub-teams
         if depth < MAX_SUBTEAM_DEPTH - 1:
             for _ in range(TEAMS_PER_TEAM):
                 _create_team_hierarchy(company_id, department_id, team_id, depth + 1, team_rows, user_rows)
 
-    # ---------------------------------------------------------------- walk & collect rows
-    print("Disabling foreign-key constraints for bulk insert …")
-    conn.execute(text("SET session_replication_role = 'replica'"))
+    # -------------------------------- build rows
+    company_rows: list[tuple] = []
+    department_rows: list[tuple] = []
+    team_rows: list[tuple] = []
+    user_rows: list[tuple] = []
 
-    try:
-        company_rows: list[tuple] = []
-        department_rows: list[tuple] = []
-        team_rows: list[tuple] = []
-        user_rows: list[tuple] = []
+    for c_idx in range(COMPANIES):
+        company_id = uuid.uuid4()
+        company_name = f"Company {c_idx + 1}"
 
-        for c_idx in range(COMPANIES):
-            company_id = uuid.uuid4()
-            admin_id = uuid.uuid4()
-            company_name = f"Company {c_idx + 1}"
+        company_rows.append((company_id, company_name))
 
-            # Company and its admin
-            company_rows.append((company_id, admin_id, company_name))
-            user_rows.append((admin_id, random_name(), None, company_id))
+        # company admin user
+        admin_id = uuid.uuid4()
+        user_rows.append((admin_id, random_name(), None, None, company_id, True, False, False))
 
-            # Departments for this company
-            for d_idx in range(DEPARTMENTS_PER_COMPANY):
-                department_id = uuid.uuid4()
-                hod_id = uuid.uuid4()
-                department_name = f"Department {d_idx + 1} – {company_name}"
+        # departments
+        for d_idx in range(DEPARTMENTS_PER_COMPANY):
+            dept_id = uuid.uuid4()
+            dept_name = f"Dept {d_idx + 1} – {company_name}"
+            department_rows.append((dept_id, dept_name, company_id))
 
-                department_rows.append((department_id, department_name, company_id, hod_id))
-                user_rows.append((hod_id, random_name(), None, company_id))
+            # department head
+            hod_id = uuid.uuid4()
+            user_rows.append((hod_id, random_name(), None, dept_id, company_id, False, True, False))
 
-                # Top-level teams
-                for _ in range(TEAMS_PER_DEPARTMENT):
-                    _create_team_hierarchy(company_id, department_id, None, 0, team_rows, user_rows)
+            # teams for this department
+            for _ in range(TEAMS_PER_DEPARTMENT):
+                _create_team_hierarchy(company_id, dept_id, None, 0, team_rows, user_rows)
 
-        # ---------------------------------------------------------------- insert rows
-        _bulk_insert("companies", ["company_id", "admin_id", "name"], company_rows)
-        _bulk_insert("users", ["user_id", "name", "team_id", "company_id"], user_rows)
-        _bulk_insert("departments", ["department_id", "name", "company_id", "head_of_department_id"], department_rows)
-        _bulk_insert("teams", ["team_id", "name", "department_id", "parent_team_id", "managed_by", "company_id"], team_rows)
-    finally:
-        print("Re-enabling foreign-key constraints …")
-        conn.execute(text("SET session_replication_role = 'origin'"))
+    # -------------------------------- insert rows
+    _bulk_insert("companies", ["company_id", "name"], company_rows)
+    _bulk_insert("departments", ["department_id", "name", "company_id"], department_rows)
+    _bulk_insert("teams", ["team_id", "name", "parent_team_id", "company_id"], team_rows)
+    _bulk_insert(
+        "users",
+        [
+            "user_id",
+            "name",
+            "team_id",
+            "department_id",
+            "company_id",
+            "is_company_admin",
+            "is_department_head",
+            "is_team_manager",
+        ],
+        user_rows,
+    )
 
 
 def create_cards(conn):

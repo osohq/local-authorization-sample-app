@@ -11,7 +11,6 @@ class Company(Base):
     __table_args__ = {"schema": "demo_app"}
 
     company_id: Mapped[str] = mapped_column(primary_key=True)
-    admin_id: Mapped[str] = mapped_column(ForeignKey("demo_app.users.user_id"), nullable=False)
     name: Mapped[str]
 
 class Department(Base):
@@ -21,7 +20,6 @@ class Department(Base):
     department_id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
     company_id: Mapped[str] = mapped_column(ForeignKey("demo_app.companies.company_id"), nullable=False)
-    head_of_department_id: Mapped[str | None] = mapped_column(ForeignKey("demo_app.users.user_id"))
 
 class Team(Base):
     __tablename__ = "teams"
@@ -29,9 +27,7 @@ class Team(Base):
 
     team_id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
-    department_id: Mapped[str] = mapped_column(ForeignKey("demo_app.departments.department_id"), nullable=False)
     parent_team_id: Mapped[str | None] = mapped_column(ForeignKey("demo_app.teams.team_id"))
-    managed_by: Mapped[str | None] = mapped_column(ForeignKey("demo_app.users.user_id"))
     company_id: Mapped[str] = mapped_column(ForeignKey("demo_app.companies.company_id"), nullable=False)
 
 class User(Base):
@@ -41,7 +37,11 @@ class User(Base):
     user_id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
     team_id: Mapped[str | None] = mapped_column(ForeignKey("demo_app.teams.team_id"))
+    department_id: Mapped[str | None] = mapped_column(ForeignKey("demo_app.departments.department_id"))
     company_id: Mapped[str] = mapped_column(ForeignKey("demo_app.companies.company_id"), nullable=False)
+    is_company_admin: Mapped[bool]
+    is_department_head: Mapped[bool]
+    is_team_manager: Mapped[bool]
 
 class Card(Base):
     __tablename__ = "cards"
