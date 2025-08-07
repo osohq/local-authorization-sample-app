@@ -5,7 +5,7 @@ from oso_cloud import Oso, typed_var, Value
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session
 
-from model import Card, User
+from model import Card, Team, User
 
 oso = Oso(
     url=os.environ["OSO_URL"],
@@ -50,10 +50,24 @@ def get_user_cards(user_id, past):
 
 
 def get_users(past):
-    query = select(User.user_id, User.manager_id, User.name)
+    from sqlalchemy.orm import aliased
+    user = aliased(User)
+    team = aliased(Team)
+    manager = aliased(User)
+    
+    query = select(
+        user.user_id, 
+        user.team_id, 
+        user.name,
+        manager.user_id.label("manager_id"),
+        manager.name.label("manager_name")
+    )
+    query = query.outerjoin(team, team.team_id == user.team_id)
+    query = query.outerjoin(manager, manager.user_id == team.managed_by)
+    
     if past is not None:
-        query = query.filter(User.user_id > past)
-    query = query.order_by(User.user_id)
+        query = query.filter(user.user_id > past)
+    query = query.order_by(user.user_id)
     query = query.limit(30)
 
     with Session(engine) as session:
@@ -68,9 +82,19 @@ def get_users(past):
 def get_user(user_id):
     from sqlalchemy.orm import aliased
     user = aliased(User)
-    manager = aliased(User, name="manager")
-    query = select(user.user_id, user.manager_id, user.name, manager.name.label("manager_name"))
-    query = query.outerjoin(manager, manager.user_id == user.manager_id)
+    team = aliased(Team)
+    manager = aliased(User)
+    
+    query = select(
+        user.user_id, 
+        user.team_id, 
+        user.name, 
+        team.name.label("team_name"),
+        manager.user_id.label("manager_id"),
+        manager.name.label("manager_name")
+    )
+    query = query.outerjoin(team, team.team_id == user.team_id)
+    query = query.outerjoin(manager, manager.user_id == team.managed_by)
     query = query.filter(user.user_id == user_id)
 
     with Session(engine) as session:
@@ -86,4 +110,4 @@ def get_transitive_reports(user_id):
 
 def get_direct_reports(user_id):
     user = typed_var("User")
-    return oso.build_query(("has_relation", user, "direct_manager", Value("User", user_id))).evaluate(user)
+    return oso.build_query(("direct_manager", user, Value("User", user_id))).evaluate(user)

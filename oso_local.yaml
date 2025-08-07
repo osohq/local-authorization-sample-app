@@ -2,7 +2,19 @@ facts:
   has_relation(Card:_, owner, User:_):
     query: |-
       SELECT card_id, owner_id FROM demo_app.cards
+  has_relation(User:_, team, Team:_):
+    query: |-
+      SELECT user_id, team_id FROM demo_app.users
+  has_relation(User:_, company, Company:_):
+    query: |-
+      SELECT user_id, company_id FROM demo_app.users
+  has_relation(Team:_, department, Department:_):
+    query: |-
+      SELECT team_id, department_id FROM demo_app.teams
 
 sql_types:
   Card: UUID
   User: UUID
+  Team: UUID
+  Department: UUID
+  Company: UUID

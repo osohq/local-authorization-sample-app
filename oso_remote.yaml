@@ -1,10 +1,16 @@
 facts:
-  has_relation(User:_, direct_manager, User:_):
+  has_relation(Team:_, parent_team, Team:_):
     db: app-db
     query: |-
-      SELECT user_id, manager_id
-      FROM demo_app.users
-      WHERE manager_id IS NOT NULL
+      SELECT team_id, parent_team_id
+      FROM demo_app.teams
+      WHERE parent_team_id IS NOT NULL
+  has_relation(Team:_, managed_by, User:_):
+    db: app-db
+    query: |-
+      SELECT team_id, managed_by
+      FROM demo_app.teams
+      WHERE managed_by IS NOT NULL
 
 dbs:
   app-db:
