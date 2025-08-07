@@ -51,29 +51,37 @@ def get_user_cards(user_id, past):
 
 def get_users(past):
     from sqlalchemy.orm import aliased
-    from sqlalchemy import and_
+    from sqlalchemy import and_, func
     user = aliased(User)
     team = aliased(Team)
-    manager = aliased(User)
-    
+    parent_team = aliased(Team)
+    mgr_same = aliased(User)
+    mgr_parent = aliased(User)
+
     query = select(
-        user.user_id, 
-        user.team_id, 
+        user.user_id,
+        user.team_id,
         user.name,
-        manager.user_id.label("manager_id"),
-        manager.name.label("manager_name")
+        func.coalesce(mgr_same.user_id, mgr_parent.user_id).label("manager_id"),
+        func.coalesce(mgr_same.name, mgr_parent.name).label("manager_name"),
     )
+
     query = query.outerjoin(team, team.team_id == user.team_id)
-    # Manager is another user in the same team with is_team_manager = TRUE
+    # manager in same team
     query = query.outerjoin(
-        manager,
-        and_(manager.team_id == user.team_id, manager.is_team_manager == True)  # noqa: E712
+        mgr_same,
+        and_(mgr_same.team_id == user.team_id, mgr_same.is_team_manager == True)  # noqa: E712
     )
-    
+    # parent team & its manager
+    query = query.outerjoin(parent_team, parent_team.team_id == team.parent_team_id)
+    query = query.outerjoin(
+        mgr_parent,
+        and_(mgr_parent.team_id == parent_team.team_id, mgr_parent.is_team_manager == True)  # noqa: E712
+    )
+
     if past is not None:
         query = query.filter(user.user_id > past)
-    query = query.order_by(user.user_id)
-    query = query.limit(30)
+    query = query.order_by(user.user_id).limit(30)
 
     with Session(engine) as session:
         users = session.execute(query).mappings().all()
@@ -86,41 +94,49 @@ def get_users(past):
 
 def get_user(user_id):
     from sqlalchemy.orm import aliased
-    from sqlalchemy import and_
-    user = aliased(User)
-    team = aliased(Team)
-    manager = aliased(User)
-    department = aliased(Department)
-    company = aliased(Company)
-    department_head = aliased(User)
-    company_admin = aliased(User)
-    
-    query = select(
-        user.user_id, 
-        user.team_id, 
-        user.name, 
-        team.name.label("team_name"),
-        manager.user_id.label("manager_id"),
-        manager.name.label("manager_name"),
-        department.name.label("department_name"),
-        department_head.user_id.label("department_head_id"),
-        department_head.name.label("department_head_name"),
-        company.name.label("company_name"),
-        company_admin.user_id.label("company_admin_id"),
-        company_admin.name.label("company_admin_name")
+    from sqlalchemy import and_, func, select
+
+    u  = aliased(User)        # the user we're looking up
+    t  = aliased(Team)        # their team
+    pt = aliased(Team)        # parent team
+    m1 = aliased(User)        # manager in same team
+    m2 = aliased(User)        # manager in parent team
+    dh = aliased(User)        # department head
+    ca = aliased(User)        # company admin
+
+    query = (
+        select(
+            u.user_id,
+            u.name,
+            u.team_id,
+            func.coalesce(m1.user_id, m2.user_id).label("manager_id"),
+            func.coalesce(m1.name,    m2.name   ).label("manager_name"),
+            dh.user_id.label("department_head_id"),
+            dh.name.label("department_head_name"),
+            ca.user_id.label("company_admin_id"),
+            ca.name.label("company_admin_name"),
+        )
+        .outerjoin(t,  t.team_id == u.team_id)
+        .outerjoin(m1, and_(
+            m1.team_id == u.team_id,
+            m1.is_team_manager == True,
+            u.is_team_manager == False
+        ))
+        .outerjoin(pt, pt.team_id == t.parent_team_id)
+        .outerjoin(m2, and_(
+            m2.team_id == pt.team_id,
+            m2.is_team_manager == True,
+            u.is_team_manager == True
+        ))
+        .outerjoin(dh, and_(dh.department_id == u.department_id, dh.is_department_head, u.is_department_head == False))
+        .outerjoin(ca, and_(ca.company_id == u.company_id, ca.is_company_admin, u.is_company_admin == False))
+        .where(u.user_id == user_id)
     )
-    query = query.outerjoin(team, team.team_id == user.team_id)
-    query = query.outerjoin(manager, and_(manager.team_id == user.team_id, manager.is_team_manager == True))  # noqa: E712
-    query = query.outerjoin(department, department.department_id == user.department_id)
-    query = query.outerjoin(department_head, and_(department_head.department_id == department.department_id, department_head.is_department_head == True))  # noqa: E712
-    query = query.outerjoin(company, company.company_id == user.company_id)
-    query = query.outerjoin(company_admin, and_(company_admin.company_id == company.company_id, company_admin.is_company_admin == True))  # noqa: E712
-    query = query.filter(user.user_id == user_id)
 
     with Session(engine) as session:
-        user = session.execute(query).mappings().one_or_none()
+        result = session.execute(query).mappings().one_or_none()
 
-    return user
+    return result
 
 
 def get_transitive_reports(user_id):
