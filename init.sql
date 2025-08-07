@@ -6,7 +6,7 @@ SELECT pg_catalog.set_config('search_path', 'demo_app', false);
 -- Companies table
 CREATE TABLE demo_app.companies (
   company_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  admin_id UUID NOT NULL REFERENCES demo_app.users(user_id) ON DELETE CASCADE,
+  admin_id UUID NOT NULL,
   name TEXT NOT NULL
 );
 
@@ -15,7 +15,7 @@ CREATE TABLE demo_app.departments (
   department_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE,
-  head_of_department_id UUID REFERENCES demo_app.users(user_id) ON DELETE SET NULL
+  head_of_department_id UUID
 );
 
 -- Teams table
@@ -24,7 +24,7 @@ CREATE TABLE demo_app.teams (
   name TEXT NOT NULL,
   department_id UUID NOT NULL REFERENCES demo_app.departments(department_id) ON DELETE CASCADE,
   parent_team_id UUID REFERENCES demo_app.teams(team_id) ON DELETE SET NULL,
-  managed_by UUID REFERENCES demo_app.users(user_id) ON DELETE SET NULL,
+  managed_by UUID,
   company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE
 );
 
@@ -35,6 +35,19 @@ CREATE TABLE demo_app.users (
   team_id UUID REFERENCES demo_app.teams(team_id) ON DELETE SET NULL,
   company_id UUID NOT NULL REFERENCES demo_app.companies(company_id) ON DELETE CASCADE
 );
+
+-- Now that all tables exist, add the circular foreign-key constraints
+ALTER TABLE demo_app.companies
+  ADD CONSTRAINT fk_companies_admin
+  FOREIGN KEY (admin_id) REFERENCES demo_app.users(user_id) ON DELETE CASCADE;
+
+ALTER TABLE demo_app.departments
+  ADD CONSTRAINT fk_departments_head
+  FOREIGN KEY (head_of_department_id) REFERENCES demo_app.users(user_id) ON DELETE SET NULL;
+
+ALTER TABLE demo_app.teams
+  ADD CONSTRAINT fk_teams_managed_by
+  FOREIGN KEY (managed_by) REFERENCES demo_app.users(user_id) ON DELETE SET NULL;
 
 CREATE TABLE demo_app.cards (
   card_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
