@@ -1,42 +1,40 @@
 actor User {
-  relations = { direct_manager: User };
+  roles = ["ExpenseManager"];
+  relations = { 
+    company: Company,
+    department: Department, 
+    team: Team
+  };
+
+  "ExpenseManager" if "Admin" on "company";
+  "ExpenseManager" if "Head" on "department";
+  "ExpenseManager" if "Manager" on "team";
 }
 
-managed_by(employee: User, manager: User) if
-  has_relation(employee, "direct_manager", manager);
+resource Company {
+  roles = ["Admin"];
+}
 
-managed_by(employee: User, manager: User) if
-  middle_manager matches User and
-  has_relation(employee, "direct_manager", middle_manager) and
-  managed_by(middle_manager, manager);
+resource Department {
+  roles = ["Head"];
+}
 
-has_role(user: User, "viewer", card: Card) if
-    card_owner matches User and
-    has_relation(card, "owner", card_owner) and
-    managed_by(card_owner, user);
+resource Team {
+  roles = ["Manager"];
+  relations = { parent_team: Team, managed_by: User, department: Department };
+
+  "Manager" if "managed_by";
+  "Manager" if "Manager" on "parent_team";
+  "Manager" if "Head" on "department";
+}
 
 resource Card {
     permissions = ["view"];
     relations = { owner: User };
-    roles = ["viewer"];
+    roles = ["Viewer"]; 
 
-    "viewer" if "owner";
+    "view" if "Viewer";
 
-    "view" if "viewer";
-}
-
-test "hierarchy" {
-    setup {
-        has_relation(Card{"1"}, "owner", User{"alice"});
-        has_relation(User{"alice"}, "direct_manager", User{"bhav"});
-        has_relation(User{"bhav"}, "direct_manager", User{"crystal"});
-        has_relation(User{"fergie"}, "direct_manager", User{"crystal"});
-        has_relation(User{"crystal"}, "direct_manager", User{"dorian"});
-    }
-
-    assert allow(User{"alice"}, "view", Card{"1"});
-    assert allow(User{"bhav"}, "view", Card{"1"});
-    assert allow(User{"crystal"}, "view", Card{"1"});
-    assert allow(User{"dorian"}, "view", Card{"1"});
-    assert_not allow(User{"fergie"}, "view", Card{"1"});
+    "Viewer" if "owner";
+    "Viewer" if "ExpenseManager" on "owner";
 }
