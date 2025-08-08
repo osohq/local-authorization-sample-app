@@ -75,9 +75,7 @@ def html_user_cards(user_id):
     company_admin_line = f"""<li>Company Admin: <a href="/users/{user['company_admin_id']}/cards">{user['company_admin_name']}</a></li>""" if user['company_admin_id'] else ""
 
     sql_html = (
-        cards_data['sql']
-        .replace(cards_data['oso_fragment'], f"<span class='oso-fragment'>{cards_data['oso_fragment']}</span>")
-        .replace("\n", "<br />")
+        cards_data['sql'].replace("\n", "<br />")
     )
 
     total_query_time = f"{cards_data['total_time'] * 1000:.2f}"

@@ -9,8 +9,7 @@ from model import Card, Team, User
 
 oso = Oso(
     url=os.environ["OSO_URL"],
-    api_key=os.environ["OSO_AUTH"],
-    data_bindings="oso_local.yaml",
+    api_key=os.environ["OSO_AUTH"]
 )
 uri = os.environ["DATABASE_URL"]
 engine = create_engine(uri, echo=True)
@@ -19,11 +18,11 @@ engine = create_engine(uri, echo=True)
 def get_user_cards(user_id, past):
     LIMIT = 30
     start = time.perf_counter()
-    sql_fragment = oso.list_local(Value("User", user_id), "view", "Card", "cards.card_id")
+    card_ids = oso.list(Value("User", user_id), "view", "Card")
     oso_query_time = time.perf_counter() - start
 
     query = select(Card.card_id, Card.owner_id)
-    query = query.filter(text(sql_fragment))
+    query = query.filter(Card.card_id.in_(card_ids))
 
     with Session(engine) as session:
         count = session.execute(select(func.count()).select_from(query)).scalar()
@@ -46,7 +45,6 @@ def get_user_cards(user_id, past):
         "total_cards": count,
         "past": cards[-1].card_id if cards and len(cards) == LIMIT else None,
         "sql": sql,
-        "oso_fragment": sql_fragment,
         "oso_query_time": oso_query_time,
         "db_query_time": db_query_time,
         "total_time": oso_query_time + db_query_time,
@@ -144,13 +142,5 @@ def get_user(user_id):
 
 
 def get_transitive_reports(user_id):
-    u = typed_var("User")
-    frag = (
-        oso.build_query(("has_role", Value("User", user_id), "Manager", u))
-           .evaluate_local_filter("user_id", u)
-    )
-    # frag looks like: '"user_id" IN (SELECT ...)'
-    query = select(User.user_id).filter(text(frag)).filter(User.user_id != user_id).order_by(User.user_id)
-    with Session(engine) as session:
-        rows = session.execute(query).scalars().all()
-    return rows
+    user = typed_var("User")
+    return oso.build_query(("has_role", Value("User", user_id), "Manager", user)).evaluate(user)

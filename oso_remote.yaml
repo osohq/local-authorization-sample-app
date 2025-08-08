@@ -19,7 +19,22 @@ facts:
     db: app-db
     query: |-
       SELECT user_id, department_id FROM demo_app.users WHERE is_department_head = TRUE
-
+  has_relation(Card:_, owner, User:_):
+    db: app-db
+    query: |-
+      SELECT card_id, owner_id FROM demo_app.cards
+  has_relation(User:_, team, Team:_):
+    db: app-db
+    query: |-
+      SELECT user_id, team_id FROM demo_app.users WHERE team_id IS NOT NULL
+  has_relation(User:_, company, Company:_):
+    db: app-db
+    query: |-
+      SELECT user_id, company_id FROM demo_app.users
+  has_relation(User:_, department, Department:_):
+    db: app-db
+    query: |-
+      SELECT user_id, department_id FROM demo_app.users WHERE department_id IS NOT NULL
 dbs:
   app-db:
     connection_string: $DATABASE_URL
