@@ -5,7 +5,7 @@ from oso_cloud import Oso, typed_var, Value
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session
 
-from model import Card, Company, Department, Team, User
+from model import Card, Team, User
 
 oso = Oso(
     url=os.environ["OSO_URL"],
