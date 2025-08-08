@@ -52,19 +52,21 @@ resource Card {
 
 test fixture company_hierarchy {
   has_relation(User{"ash"}, "company", Company{"oso"});
+  has_relation(User{"ash"}, "department", Department{"engineering"});
   has_relation(User{"ash"}, "team", Team{"customer-eng"});
 
   has_relation(User{"gabe"}, "company", Company{"oso"});
+  has_relation(User{"gabe"}, "department", Department{"engineering"});
   has_relation(User{"gabe"}, "team", Team{"customer-eng"});
+  has_role(User{"gabe"}, "Manager", Team{"customer-eng"});
+
+  has_relation(User{"nick"}, "company", Company{"oso"});
+  has_relation(User{"nick"}, "department", Department{"engineering"});
+  has_role(User{"nick"}, "Head", Department{"engineering"});
 
   has_relation(User{"nick"}, "company", Company{"oso"});
   has_relation(User{"nick"}, "team", Team{"engineering"});
-  has_relation(Team{"engineering"}, "department", Department{"engineering"});
-
-  has_relation(Team{"customer-eng"}, "managed_by", User{"gabe"});
-  has_relation(Team{"customer-eng"}, "department", Department{"engineering"});
-
-  has_role(User{"nick"}, "Head", Department{"engineering"});
+  has_relation(User{"nick"}, "department", Department{"engineering"});
 
   has_role(User{"graham"}, "Admin", Company{"oso"});
 }

@@ -18,7 +18,9 @@ engine = create_engine(uri, echo=True)
 
 def get_user_cards(user_id, past):
     LIMIT = 30
+    start = time.perf_counter()
     sql_fragment = oso.list_local(Value("User", user_id), "view", "Card", "cards.card_id")
+    oso_query_time = time.perf_counter() - start
 
     query = select(Card.card_id, Card.owner_id)
     query = query.filter(text(sql_fragment))
@@ -37,7 +39,7 @@ def get_user_cards(user_id, past):
     with Session(engine) as session:
         start = time.perf_counter()
         cards = session.execute(query).mappings().all()
-        query_time = time.perf_counter() - start
+        db_query_time = time.perf_counter() - start
 
     return {
         "cards": [dict(card) for card in cards],
@@ -45,7 +47,8 @@ def get_user_cards(user_id, past):
         "past": cards[-1].card_id if cards and len(cards) == LIMIT else None,
         "sql": sql,
         "oso_fragment": sql_fragment,
-        "query_time": query_time,
+        "oso_query_time": oso_query_time,
+        "db_query_time": db_query_time,
     }
 
 

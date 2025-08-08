@@ -81,7 +81,8 @@ def html_user_cards(user_id):
         .replace("\n", "<br />")
     )
 
-    query_time = f"{cards_data['query_time'] * 1000:.2f}"
+    oso_query_time = f"{cards_data['oso_query_time'] * 1000:.2f}"
+    db_query_time = f"{cards_data['db_query_time'] * 1000:.2f}"
 
     return page(f"""
     <a href="/users">&lt; Users</a>
@@ -105,7 +106,9 @@ def html_user_cards(user_id):
         This is the full Postgres query to fetch cards this user is allowed to view.
         The section in blue is the authorization filter returned by <span class="code">oso.list_local</span>.
         </p>
-        Query ran in {query_time}ms
+        <p>
+        Oso query ran in {oso_query_time}ms, Postgres query ran in {db_query_time}ms
+        </p>
         <div class="sql">{sql_html}</div>
     </div>
     """)
