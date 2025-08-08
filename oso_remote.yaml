@@ -5,10 +5,10 @@ facts:
       SELECT team_id, parent_team_id
       FROM demo_app.teams
       WHERE parent_team_id IS NOT NULL
-  has_role(User:_, Manager, Team:_):
+  has_relation(Team:_, managed_by, User:_):
     db: app-db
     query: |-
-      SELECT user_id, team_id
+      SELECT team_id, user_id
       FROM demo_app.users
       WHERE is_team_manager = TRUE
   has_role(User:_, Admin, Company:_):

@@ -1,14 +1,15 @@
 actor User {
-  roles = ["ExpenseManager"];
+  roles = ["Manager"];
+
   relations = { 
     company: Company,
     department: Department,
     team: Team
   };
 
-  "ExpenseManager" if "Admin" on "company";
-  "ExpenseManager" if "Head" on "department";
-  "ExpenseManager" if "Manager" on "team";
+  "Manager" if "Admin" on "company";
+  "Manager" if "Head" on "department";
+  "Manager" if "Manager" on "team";
 }
 
 resource Company {
@@ -21,23 +22,11 @@ resource Department {
 
 resource Team {
   roles = ["Manager"];
-  relations = { parent_team: Team };
+  relations = { parent_team: Team, managed_by: User };
 
   "Manager" if "Manager" on "parent_team";
+  "Manager" if "managed_by";
 }
-
-direct_manager(user: User, direct_manager: User) if
-  team matches Team and
-  has_relation(user, "team", team) and
-  has_relation(direct_manager, "team", team) and
-  has_role(direct_manager, "Manager", team) and
-  user != direct_manager;
-
-managed_by(user: User, manager: User) if
-  team matches Team and
-  has_relation(user, "team", team) and
-  has_role(team, "Manager", manager) and 
-  user != manager;
 
 resource Card {
     permissions = ["view"];
@@ -47,7 +36,7 @@ resource Card {
     "view" if "Viewer";
 
     "Viewer" if "owner";
-    "Viewer" if "ExpenseManager" on "owner";
+    "Viewer" if "Manager" on "owner";
 }
 
 test fixture company_hierarchy {

@@ -49,6 +49,7 @@ def get_user_cards(user_id, past):
         "oso_fragment": sql_fragment,
         "oso_query_time": oso_query_time,
         "db_query_time": db_query_time,
+        "total_time": oso_query_time + db_query_time,
     }
 
 
@@ -143,10 +144,13 @@ def get_user(user_id):
 
 
 def get_transitive_reports(user_id):
-    user = typed_var("User")
-    return oso.build_query(("managed_by", user, Value("User", user_id))).evaluate(user)
-
-
-def get_direct_reports(user_id):
-    user = typed_var("User")
-    return oso.build_query(("direct_manager", user, Value("User", user_id))).evaluate(user)
+    u = typed_var("User")
+    frag = (
+        oso.build_query(("has_role", Value("User", user_id), "Manager", u))
+           .evaluate_local_filter("user_id", u)
+    )
+    # frag looks like: '"user_id" IN (SELECT ...)'
+    query = select(User.user_id).filter(text(frag)).filter(User.user_id != user_id).order_by(User.user_id)
+    with Session(engine) as session:
+        rows = session.execute(query).scalars().all()
+    return rows

@@ -1,6 +1,6 @@
 from flask import Flask, request
 
-from data import get_user_cards, get_users, get_user, get_transitive_reports, get_direct_reports
+from data import get_user_cards, get_users, get_user, get_transitive_reports
 
 app = Flask(__name__)
 
@@ -62,7 +62,6 @@ def html_user_cards(user_id):
         """)
 
     reports = get_transitive_reports(user_id)
-    direct_reports = get_direct_reports(user_id)
     cards_data = get_user_cards(user_id, past)
 
     cards_list = ''.join(
@@ -81,6 +80,7 @@ def html_user_cards(user_id):
         .replace("\n", "<br />")
     )
 
+    total_query_time = f"{cards_data['total_time'] * 1000:.2f}"
     oso_query_time = f"{cards_data['oso_query_time'] * 1000:.2f}"
     db_query_time = f"{cards_data['db_query_time'] * 1000:.2f}"
 
@@ -89,7 +89,6 @@ def html_user_cards(user_id):
     <h1>{user['name']}</h1>
     <ul>
         <li>{len(reports)} transitive reports</li>
-        <li>{len(direct_reports)} direct reports</li>
         {manager_line}
         {department_head_line}
         {company_admin_line}
@@ -105,6 +104,9 @@ def html_user_cards(user_id):
         <p>
         This is the full Postgres query to fetch cards this user is allowed to view.
         The section in blue is the authorization filter returned by <span class="code">oso.list_local</span>.
+        </p>
+        <p>
+        Total time: {total_query_time}ms
         </p>
         <p>
         Oso query ran in {oso_query_time}ms, Postgres query ran in {db_query_time}ms
