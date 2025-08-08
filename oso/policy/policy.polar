@@ -2,10 +2,12 @@ actor User {
   roles = ["ExpenseManager"];
   relations = { 
     company: Company,
+    department: Department,
     team: Team
   };
 
   "ExpenseManager" if "Admin" on "company";
+  "ExpenseManager" if "Head" on "department";
   "ExpenseManager" if "Manager" on "team";
 }
 
@@ -19,16 +21,16 @@ resource Department {
 
 resource Team {
   roles = ["Manager"];
-  relations = { parent_team: Team, department: Department };
+  relations = { parent_team: Team };
 
   "Manager" if "Manager" on "parent_team";
-  "Manager" if "Head" on "department";
 }
 
 direct_manager(user: User, direct_manager: User) if
   team matches Team and
   has_relation(user, "team", team) and
-  has_relation(team, "managed_by", direct_manager) and
+  has_relation(direct_manager, "team", team) and
+  has_role(direct_manager, "Manager", team) and
   user != direct_manager;
 
 managed_by(user: User, manager: User) if

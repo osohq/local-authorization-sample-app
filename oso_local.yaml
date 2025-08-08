@@ -8,6 +8,9 @@ facts:
   has_relation(User:_, company, Company:_):
     query: |-
       SELECT user_id, company_id FROM demo_app.users
+  has_relation(User:_, department, Department:_):
+    query: |-
+      SELECT user_id, department_id FROM demo_app.users
 
 sql_types:
   Card: UUID
