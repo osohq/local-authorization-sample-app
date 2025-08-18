@@ -26,6 +26,6 @@ RUN chmod +x ./standalone
 
 ENV OSO_DIRECTORY=/data
 ENV OSO_PORT=8081
-ENV OSO_FEATURES="reconcile-facts-update"
+ENV OSO_FEATURES="reconcile-facts-update,mutually-exclusive-fact-types,local-recursion"
 
 ENTRYPOINT ["/app/standalone", "--watch-for-changes", "/policy/policy.polar"]

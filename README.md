@@ -10,5 +10,5 @@
 - `export OSO_AUTH=e_0123456789_12345_osotesttoken01xiIn`
 - `export OSO_URL=http://localhost:8081`
 - (if you need to install the `oso-cloud` CLI:) `curl -L https://cloud.osohq.com/install.sh | bash`
-- `oso-cloud experimental reconcile oso_remote.yaml --perform-updates`
+- `oso-cloud reconcile oso_remote.yaml --perform-updates`
 - open `http://localhost:5050/users` in your browser
