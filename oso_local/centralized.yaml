@@ -1,0 +1,44 @@
+facts:
+  # has_relation(Card:_, owner, User:_):
+  #   query: |-
+  #     SELECT card_id, owner_id FROM demo_app.cards
+  ###########################################
+  # Recursive team hierarchy.
+  # Comment out to offload this to Oso.
+  ###########################################
+  # has_relation(Team:_, parent_team, Team:_):
+  #   query: |-
+  #     SELECT team_id, parent_team_id
+  #     FROM demo_app.teams
+  #     WHERE parent_team_id IS NOT NULL
+  # has_relation(User:_, team, Team:_):
+  #   query: |-
+  #     SELECT user_id, team_id FROM demo_app.users
+  # has_relation(Team:_, managed_by, User:_):
+  #   query: |-
+  #     SELECT team_id, user_id
+  #     FROM demo_app.users
+  #     WHERE is_team_manager = TRUE
+  ###########################################
+  # Company and department role assignments.
+  # Comment out to offload this to Oso.
+  ###########################################
+  # has_role(User:_, Admin, Company:_):
+  #   query: |-
+  #     SELECT user_id, company_id FROM demo_app.users WHERE is_company_admin = TRUE
+  # has_role(User:_, Head, Department:_):
+  #   query: |-
+  #     SELECT user_id, department_id FROM demo_app.users WHERE is_department_head = TRUE
+  # has_relation(User:_, company, Company:_):
+  #   query: |-
+  #     SELECT user_id, company_id FROM demo_app.users
+  # has_relation(User:_, department, Department:_):
+  #   query: |-
+  #     SELECT user_id, department_id FROM demo_app.users WHERE department_id IS NOT NULL
+
+sql_types:
+  Card: UUID
+  User: UUID
+  Team: UUID
+  Department: UUID
+  Company: UUID
